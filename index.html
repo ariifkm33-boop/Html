@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat World — Made by Saidul Islam</title>
+<style>
+  :root{
+    --bg:#0e1020;--card:#181b33;--card2:#22264a;--line:#2e3260;
+    --txt:#e9ebff;--muted:#9aa0c9;--pri:#6c5ce7;--pri2:#00c2ff;
+    --err:#ef4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Roboto,system-ui,sans-serif;}
+  body{background:radial-gradient(1000px 600px at 20% -10%,#2a1f6b,transparent),
+              radial-gradient(900px 600px at 110% 10%,#0b4f7a,transparent),var(--bg);
+       color:var(--txt);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;
+       background:rgba(10,12,26,.55);}
+  .screen{display:none;flex-direction:column;flex:1;padding:18px;gap:14px;}
+  .screen.active{display:flex;}
+  .center{margin:auto;text-align:center;width:100%;}
+  .brand{font-size:56px;margin-bottom:6px;}
+  h1{font-size:28px;}
+  .tag{color:var(--muted);margin-top:6px;font-size:15px;}
+  .made{margin:14px 0 22px;font-size:14px;color:var(--pri2);}
+  .made b{color:#fff;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .card h2{font-size:18px;margin-bottom:12px;}
+  .field{margin-bottom:12px;text-align:left;}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+        background:var(--card2);color:var(--txt);font-size:16px;outline:none;}
+  input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(108,92,231,.25);}
+
+  .btn{border:none;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;
+       cursor:pointer;transition:.15s;width:100%;margin-top:8px;color:#fff;}
+  .btn.primary{background:linear-gradient(135deg,var(--pri),var(--pri2));}
+  .btn.primary:hover{filter:brightness(1.12);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);}
+  .btn.ghost:hover{background:var(--card2);}
+
+  .err{color:var(--err);font-size:13px;min-height:18px;text-align:left;margin-top:4px;}
+
+  .topnav{display:flex;gap:8px;background:var(--card);border:1px solid var(--line);
+          border-radius:12px;padding:6px;}
+  .topnav button{flex:1;padding:10px;border-radius:9px;border:none;background:transparent;
+                 color:var(--muted);font-size:14.5px;font-weight:600;cursor:pointer;}
+  .topnav button.active{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .topbar .who b{color:var(--pri2);}
+  .icon-btn{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+            border-radius:9px;padding:8px 12px;cursor:pointer;font-size:14px;}
+
+  .banner{background:linear-gradient(135deg,rgba(108,92,231,.35),rgba(0,194,255,.25));
+          border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px;text-align:center;}
+  .banner b{color:#fff;}
+
+  .list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;}
+  .room{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+        border-radius:14px;padding:12px 14px;cursor:pointer;}
+  .room:hover{border-color:var(--pri);}
+  .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+          background:linear-gradient(135deg,var(--pri),var(--pri2));font-weight:700;color:#fff;flex:none;}
+  .room .info{flex:1;min-width:0;}
+  .room .info .n{font-weight:600;font-size:15px;}
+  .room .info .p{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:14px;}
+
+  .row{display:flex;gap:10px;}
+  .row .btn{margin-top:0;}
+
+  #s-chat{padding:0;}
+  .chat-head{display:flex;align-items:center;gap:10px;padding:14px 16px;
+             background:var(--card);border-bottom:1px solid var(--line);}
+  .chat-head .t{flex:1;}
+  .chat-head .t .n{font-weight:600;}
+  .chat-head .t .s{font-size:12px;color:var(--muted);}
+  .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:200px;}
+  .msg{max-width:78%;padding:10px 13px;border-radius:14px;font-size:14.5px;
+       line-height:1.45;word-wrap:break-word;cursor:pointer;}
+  .msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--pri),#8b7bff);
+          border-bottom-right-radius:4px;}
+  .msg.you{align-self:flex-start;background:var(--card2);border:1px solid var(--line);
+           border-bottom-left-radius:4px;}
+  .msg .time{display:block;font-size:10.5px;opacity:.65;margin-top:4px;}
+  .msg .edited{font-style:italic;opacity:.85;}
+  .msg .edited::before{content:"• ";}
+  .chat-foot{display:flex;gap:8px;padding:12px;background:var(--card);border-top:1px solid var(--line);}
+  .chat-foot input{flex:1;}
+  .chat-foot button{width:auto;padding:0 18px;margin:0;}
+
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;
+         align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal.show{display:flex;}
+  .modal .card{max-width:400px;width:100%;text-align:center;}
+  .code{font-size:26px;font-weight:700;letter-spacing:5px;color:var(--pri2);margin:6px 0 4px;}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+         background:var(--card2);border:1px solid var(--line);padding:11px 18px;border-radius:10px;
+         font-size:14px;transition:.25s;opacity:0;z-index:99;}
+  .toast.show{transform:translateX(-50%);opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- WELCOME -->
+  <section class="screen active" id="s-welcome">
+    <div class="center">
+      <div class="brand">💬</div>
+      <h1>Chat World</h1>
+      <p class="tag">Welcome to Chat World</p>
+      <p class="made">Made by <b>Saidul Islam</b></p>
+      <div class="topnav" style="max-width:320px;margin:0 auto 10px;">
+        <button id="navChat">💬 Chat</button>
+        <button id="navLogin">🔑 Login</button>
+      </div>
+      <button class="btn primary" id="navCreate">➕ Create New ID</button>
+    </div>
+  </section>
+
+  <!-- LOGIN -->
+  <section class="screen" id="s-login">
+    <div class="topbar">
+      <button class="icon-btn" data-go="s-welcome">←</button>
+      <h2>Login</h2><span style="width:38px"></span>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="field">
+        <label>Your ID (8 digits)</label>
+        <input id="loginId" maxlength="8" inputmode="numeric" placeholder="12345678">
+      </div>
+      <div class="field">
+        <label>Password (6 digits)</label>
+        <input id="loginPw" type="password" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary" id="btnLogin">Login</button>
+      <button class="btn ghost" id="goSignup">Create New ID</button>
+    </div>
+  </section>
+
+  <!-- SIGNUP -->
+  <section class="screen" id="s-signup">
+    <div class="topbar">
+      <button class="icon-btn" data-go="s-welcome">←</button>
+      <h2>Create New ID</h2><span style="width:38px"></span>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="field">
+        <label>New ID (8 digits)</label>
+        <input id="suId" maxlength="8" inputmode="numeric" placeholder="87654321">
+      </div>
+      <div class="field">
+        <label>Password (6 digits)</label>
+        <input id="suPw" type="password" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input id="suPw2" type="password" maxlength="6" inputmode="numeric" placeholder="••••••">
+      </div>
+      <div class="err" id="suErr"></div>
+      <button class="btn primary" id="btnSignup">Create ID</button>
+    </div>
+  </section>
+
+  <!-- HOME -->
+  <section class="screen" id="s-home">
+    <div class="topbar">
+      <div class="who">Logged in: <b id="meId">—</b></div>
+      <button class="icon-btn" id="btnLogout">Logout</button>
+    </div>
+    <div class="banner">Welcome to <b>Chat World</b> — Made by <b>Saidul Islam</b></div>
+    <div class="row">
+      <button class="btn primary" id="btnCreate">➕ Create Chat</button>
+      <button class="btn ghost" id="btnAddOpen">🔗 Add / Join</button>
+    </div>
+    <h2 style="font-size:16px;color:var(--muted);">My Chats</h2>
+    <div class="list" id="roomList"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section class="screen" id="s-chat">
+    <div class="chat-head">
+      <button class="icon-btn" id="btnBack">←</button>
+      <div class="t">
+        <div class="n" id="chatTitle">Chat</div>
+        <div class="s" id="chatSub">This website created by Saidul Islam</div>
+      </div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="chat-foot">
+      <input id="msgInput" placeholder="Type a message...">
+      <button class="btn primary" id="btnSend">Send</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODAL: chat created -->
+<div class="modal" id="modal">
+  <div class="card">
+    <h2>🎉 Chat Created</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:6px;">Share this with your friend</p>
+    <p style="margin-top:14px;font-size:12px;color:var(--muted);">Chat Number (4 digits)</p>
+    <div class="code" id="mNum">0000</div>
+    <p style="font-size:12px;color:var(--muted);">Chat Password (8 digits)</p>
+    <div class="code" id="mPass">00000000</div>
+    <p style="margin:14px 0 4px;color:var(--pri2);font-size:13.5px;">
+      This website created by <b>Saidul Islam</b>
+    </p>
+    <button class="btn ghost" id="mCopy">📋 Copy</button>
+    <button class="btn primary" id="mGo">Go to Chat</button>
+  </div>
+</div>
+
+<!-- MODAL: join -->
+<div class="modal" id="modalJoin">
+  <div class="card">
+    <h2>🔗 Add / Join Chat</h2>
+    <div class="field" style="margin-top:12px">
+      <label>Chat Number (4 digits)</label>
+      <input id="joinNum" maxlength="4" inputmode="numeric" placeholder="4821">
+    </div>
+    <div class="field">
+      <label>Chat Password (8 digits)</label>
+      <input id="joinPass" maxlength="8" inputmode="numeric" placeholder="12345678">
+    </div>
+    <div class="err" id="joinErr"></div>
+    <button class="btn primary" id="btnJoin">Add</button>
+    <button class="btn ghost" id="btnJoinCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: edit -->
+<div class="modal" id="modalEdit">
+  <div class="card">
+    <h2>✏️ Edit Message</h2>
+    <div class="field" style="margin-top:12px">
+      <label>Your message</label>
+      <input id="editInput" placeholder="Edit your message...">
+    </div>
+    <div class="err" id="editErr"></div>
+    <button class="btn primary" id="btnEditSave">Save</button>
+    <button class="btn ghost" id="btnEditCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Storage ----------
+  var K = { users:'cw_users', rooms:'cw_rooms', msgs:'cw_messages', session:'cw_session' };
+  function load(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
+  function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+  function getUsers(){ return load(K.users, {}); }
+  function getRooms(){ return load(K.rooms, {}); }
+  function getMsgs(){ return load(K.msgs, {}); }
+
+  // ---------- Helpers ----------
+  var currentUser = null;
+  var currentRoom = null;
+  var editingKey = null;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  }); }
+  function isDigits(v,n){ return new RegExp('^\\d{'+n+'}$').test(v); }
+  function onlyDigits(el){
+    el.addEventListener('input', function(){ el.value = el.value.replace(/\D/g,''); });
+  }
+  function timeStr(ts){
+    return new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+  function show(id){
+    var all = document.querySelectorAll('.screen');
+    for (var i=0;i<all.length;i++) all[i].classList.remove('active');
+    $(id).classList.add('active');
+  }
+  function toast(m){
+    var t = $('toast');
+    t.textContent = m;
+    t.classList.add('show');
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  // ---------- INIT ----------
+  function init(){
+    console.log('Chat World loaded ✅');
+
+    // digit-only fields
+    onlyDigits($('loginId')); onlyDigits($('loginPw'));
+    onlyDigits($('suId'));    onlyDigits($('suPw')); onlyDigits($('suPw2'));
+    onlyDigits($('joinNum')); onlyDigits($('joinPass'));
+
+    // back buttons
+    var backs = document.querySelectorAll('[data-go]');
+    for (var i=0;i<backs.length;i++){
+      (function(b){
+        b.addEventListener('click', function(){ show(b.getAttribute('data-go')); });
+      })(backs[i]);
+    }
+
+    // welcome topnav
+    $('navLogin').addEventListener('click', function(){ show('s-login'); });
+    $('navCreate').addEventListener('click', function(){ show('s-signup'); });
+    $('navChat').addEventListener('click', function(){
+      if (currentUser) goHome();
+      else show('s-login');
+    });
+
+    // login screen: create id
+    $('goSignup').addEventListener('click', function(){ show('s-signup'); });
+
+    // signup
+    $('btnSignup').addEventListener('click', doSignup);
+
+    // login
+    $('btnLogin').addEventListener('click', doLogin);
+
+    // logout
+    $('btnLogout').addEventListener('click', function(){
+      currentUser = null; currentRoom = null;
+      localStorage.removeItem(K.session);
+      show('s-welcome');
+    });
+
+    // create chat
+    $('btnCreate').addEventListener('click', doCreateChat);
+
+    // add / join
+    $('btnAddOpen').addEventListener('click', function(){
+      $('joinErr').textContent = '';
+      $('joinNum').value = ''; $('joinPass').value = '';
+      $('modalJoin').classList.add('show');
+    });
+    $('btnJoinCancel').addEventListener('click', function(){
+      $('modalJoin').classList.remove('show');
+    });
+    $('btnJoin').addEventListener('click', doJoin);
+
+    // chat
+    $('btnBack').addEventListener('click', function(){
+      currentRoom = null;
+      goHome();
+    });
+    $('btnSend').addEventListener('click', sendMessage);
+    $('msgInput').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // edit
+    $('btnEditSave').addEventListener('click', saveEdit);
+    $('btnEditCancel').addEventListener('click', function(){
+      $('modalEdit').classList.remove('show');
+      editingKey = null;
+    });
+    $('editInput').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') saveEdit();
+    });
+
+    // auto session restore
+    var savedId = localStorage.getItem(K.session);
+    if (savedId && getUsers()[savedId]){
+      currentUser = savedId;
+      goHome();
+    } else {
+      show('s-welcome');
+    }
+  }
+
+  // ---------- SIGNUP ----------
+  function doSignup(){
+    var err = $('suErr'); err.textContent = '';
+    var id = $('suId').value.trim();
+    var pw = $('suPw').value.trim();
+    var pw2 = $('suPw2').value.trim();
+
+    if (!isDigits(id, 8))  { err.textContent = 'ID must be exactly 8 digits.'; return; }
+    if (!isDigits(pw, 6))  { err.textContent = 'Password must be exactly 6 digits.'; return; }
+    if (pw !== pw2)        { err.textContent = 'Passwords do not match.'; return; }
+
+    var users = getUsers();
+    if (users[id]) { err.textContent = 'This ID already exists. Please login.'; return; }
+
+    users[id] = { password: pw, chats: [], createdAt: Date.now() };
+    save(K.users, users);
+
+    currentUser = id;
+    localStorage.setItem(K.session, id);
+
+    $('suId').value = ''; $('suPw').value = ''; $('suPw2').value = '';
+    toast('ID created ✅');
+    goHome();
+  }
+
+  // ---------- LOGIN ----------
+  function doLogin(){
+    var err = $('loginErr'); err.textContent = '';
+    var id = $('loginId').value.trim();
+    var pw = $('loginPw').value.trim();
+
+    if (!isDigits(id, 8)) { err.textContent = 'ID must be exactly 8 digits.'; return; }
+    if (!isDigits(pw, 6)) { err.textContent = 'Password must be exactly 6 digits.'; return; }
+
+    var users = getUsers();
+    if (!users[id])                { err.textContent = 'No account found with this ID.'; return; }
+    if (users[id].password !== pw) { err.textContent = 'Wrong password.'; return; }
+
+    currentUser = id;
+    localStorage.setItem(K.session, id);
+
+    $('loginId').value = ''; $('loginPw').value = '';
+    toast('Logged in ✅');
+    goHome();
+  }
+
+  // ---------- HOME ----------
+  function goHome(){
+    show('s-home');
+    $('meId').textContent = currentUser;
+    renderHome();
+  }
+
+  function renderHome(){
+    var users = getUsers();
+    var me = users[currentUser];
+    if (!me){ $('btnLogout').click(); return; }
+
+    var rooms = getRooms();
+    var allMsgs = getMsgs();
+    var list = $('roomList');
+    list.innerHTML = '';
+
+    var mine = (me.chats || []).filter(function(r){ return rooms[r]; });
+
+    if (!mine.length){
+      list.innerHTML = '<div class="empty">No chats yet.<br>Tap <b>Create Chat</b> or <b>Add / Join</b>.</div>';
+      return;
+    }
+
+    mine.sort(function(a,b){
+      var la = (allMsgs[a] && allMsgs[a].length) ? allMsgs[a][allMsgs[a].length-1].ts : rooms[a].createdAt;
+      var lb = (allMsgs[b] && allMsgs[b].length) ? allMsgs[b][allMsgs[b].length-1].ts : rooms[b].createdAt;
+      return lb - la;
+    });
+
+    mine.forEach(function(rid){
+      var arr = allMsgs[rid] || [];
+      var last = arr.length ? arr[arr.length-1] : null;
+      var div = document.createElement('div');
+      div.className = 'room';
+      div.innerHTML =
+        '<div class="avatar">' + esc(rid.slice(0,2)) + '</div>' +
+        '<div class="info">' +
+          '<div class="n">Chat #' + esc(rid) + '</div>' +
+          '<div class="p">' + (last ? esc(last.text) : 'No messages yet') + '</div>' +
+        '</div>';
+      div.addEventListener('click', function(){ openRoom(rid); });
+      list.appendChild(div);
+    });
+  }
+
+  // ---------- CREATE CHAT ----------
+  function doCreateChat(){
+    var rooms = getRooms();
+    var num;
+    do { num = String(Math.floor(1000 + Math.random()*9000)); } while (rooms[num]);
+    var pass = String(Math.floor(10000000 + Math.random()*90000000));
+
+    rooms[num] = { password: pass, owner: currentUser, createdAt: Date.now() };
+    save(K.rooms, rooms);
+
+    var users = getUsers();
+    users[currentUser].chats = users[currentUser].chats || [];
+    if (users[currentUser].chats.indexOf(num) === -1) users[currentUser].chats.push(num);
+    save(K.users, users);
+
+    $('mNum').textContent  = num;
+    $('mPass').textContent = pass;
+    $('modal').classList.add('show');
+
+    $('mCopy').onclick = function(){
+      var text = 'Chat World\nChat Number: ' + num + '\nPassword: ' + pass +
+                 '\nThis website created by Saidul Islam';
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(
+        function(){ toast('Copied ✅'); },
+        function(){ toast('Copy failed'); }
+      ); else toast('Copy not supported');
+    };
+    $('mGo').onclick = function(){
+      $('modal').classList.remove('show');
+      openRoom(num);
+    };
+  }
+
+  // ---------- JOIN ----------
+  function doJoin(){
+    var err = $('joinErr'); err.textContent = '';
+    var num  = $('joinNum').value.trim();
+    var pass = $('joinPass').value.trim();
+
+    if (!isDigits(num, 4))  { err.textContent = 'Chat number must be 4 digits.'; return; }
+    if (!isDigits(pass, 8)) { err.textContent = 'Chat password must be 8 digits.'; return; }
+
+    var rooms = getRooms();
+    if (!rooms[num])                   { err.textContent = 'No chat found with this number.'; return; }
+    if (rooms[num].password !== pass)  { err.textCont

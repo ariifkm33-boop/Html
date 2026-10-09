@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chat World — Made by Saidul Islam</title>
+<style>
+  :root{
+    --bg:#0e1020; --card:#181b33; --card2:#22264a; --line:#2e3260;
+    --txt:#e9ebff; --muted:#9aa0c9; --pri:#6c5ce7; --pri2:#00c2ff;
+    --ok:#22c55e; --err:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; font-family:"Segoe UI",Roboto,system-ui,sans-serif;}
+  body{background:radial-gradient(1000px 600px at 20% -10%,#2a1f6b,transparent),
+              radial-gradient(900px 600px at 110% 10%,#0b4f7a,transparent),var(--bg);
+       color:var(--txt); min-height:100vh; display:flex; justify-content:center;}
+
+  #app{width:100%; max-width:480px; min-height:100vh; display:flex; flex-direction:column;
+       background:rgba(10,12,26,.55); backdrop-filter:blur(6px);}
+
+  .screen{display:none; flex-direction:column; flex:1; padding:18px; gap:14px;}
+  .screen.active{display:flex;}
+  .center{margin:auto; text-align:center; width:100%;}
+  .brand{font-size:56px; margin-bottom:6px;}
+  h1{font-size:28px; letter-spacing:.5px;}
+  .tag{color:var(--muted); margin-top:6px; font-size:15px;}
+  .made{margin:14px 0 22px; font-size:14px; color:var(--pri2);}
+  .made b{color:#fff;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px;}
+  .card h2{font-size:18px; margin-bottom:12px;}
+
+  .field{margin-bottom:12px; text-align:left;}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  input{width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line);
+        background:var(--card2); color:var(--txt); font-size:16px; letter-spacing:2px;
+        outline:none; transition:.15s;}
+  input:focus{border-color:var(--pri); box-shadow:0 0 0 3px rgba(108,92,231,.25);}
+
+  .btn{border:none; border-radius:10px; padding:12px 16px; font-size:15px; font-weight:600;
+       cursor:pointer; transition:.15s; width:100%; margin-top:8px;}
+  .btn.primary{background:linear-gradient(135deg,var(--pri),var(--pri2)); color:#fff;}
+  .btn.primary:hover{filter:brightness(1.12);}
+  .btn.ghost{background:transparent; border:1px solid var(--line); color:var(--txt);}
+  .btn.ghost:hover{background:var(--card2);}
+  .btn.small{width:auto; padding:9px 14px; font-size:14px; margin:0;}
+
+  .err{color:var(--err); font-size:13px; min-height:18px; text-align:left; margin-top:4px;}
+
+  /* Top nav */
+  .topnav{display:flex; gap:8px; background:var(--card); border:1px solid var(--line);
+          border-radius:12px; padding:6px; margin-bottom:4px;}
+  .topnav button{flex:1; padding:10px; border-radius:9px; border:none; background:transparent;
+                 color:var(--muted); font-size:14.5px; font-weight:600; cursor:pointer; transition:.15s;}
+  .topnav button.active{background:linear-gradient(135deg,var(--pri),var(--pri2)); color:#fff;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .topbar .who{font-size:13px; color:var(--muted);}
+  .topbar .who b{color:var(--pri2);}
+  .icon-btn{background:var(--card2); border:1px solid var(--line); color:var(--txt);
+            border-radius:9px; padding:8px 12px; cursor:pointer; font-size:14px;}
+
+  .banner{background:linear-gradient(135deg,rgba(108,92,231,.35),rgba(0,194,255,.25));
+          border:1px solid var(--line); border-radius:14px; padding:14px; font-size:14px; text-align:center;}
+  .banner b{color:#fff;}
+
+  .list{display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1;}
+  .room{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line);
+        border-radius:14px; padding:12px 14px; cursor:pointer; transition:.15s;}
+  .room:hover{border-color:var(--pri); transform:translateY(-1px);}
+  .avatar{width:42px; height:42px; border-radius:50%; display:grid; place-items:center;
+          background:linear-gradient(135deg,var(--pri),var(--pri2)); font-weight:700; color:#fff; flex:none;}
+  .room .info{flex:1; min-width:0;}
+  .room .info .n{font-weight:600; font-size:15px;}
+  .room .info .p{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .empty{color:var(--muted); text-align:center; padding:26px 10px; font-size:14px;}
+
+  .row{display:flex; gap:10px;}
+  .row .btn{margin-top:0;}
+
+  /* Chat screen */
+  #s-chat{padding:0;}
+  .chat-head{display:flex; align-items:center; gap:10px; padding:14px 16px;
+             background:var(--card); border-bottom:1px solid var(--line);}
+  .chat-head .t{flex:1;}
+  .chat-head .t .n{font-weight:600;}
+  .chat-head .t .s{font-size:12px; color:var(--muted);}
+  .msgs{flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px;}
+  .msg{max-width:78%; padding:10px 13px; border-radius:14px; font-size:14.5px;
+       line-height:1.45; word-wrap:break-word; animation:pop .15s ease; cursor:pointer; position:relative;}
+  @keyframes pop{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+  .msg.me{align-self:flex-end; background:linear-gradient(135deg,var(--pri),#8b7bff);
+          border-bottom-right-radius:4px;}
+  .msg.you{align-self:flex-start; background:var(--card2); border:1px solid var(--line);
+           border-bottom-left-radius:4px;}
+  .msg .time{display:block; font-size:10.5px; opacity:.65; margin-top:4px;}
+  .msg .edited{font-style:italic; opacity:.85;}
+  .msg .edited::before{content:"• ";}
+  .chat-foot{display:flex; gap:8px; padding:12px; background:var(--card); border-top:1px solid var(--line);}
+  .chat-foot input{letter-spacing:normal; flex:1;}
+  .chat-foot button{width:auto; padding:0 18px; margin:0;}
+
+  /* Modal */
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.65); display:none;
+         align-items:center; justify-content:center; padding:20px; z-index:50;}
+  .modal.show{display:flex;}
+  .modal .card{max-width:400px; width:100%; text-align:center;}
+  .code{font-size:26px; font-weight:700; letter-spacing:5px; color:var(--pri2); margin:6px 0 4px;}
+  .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px);
+         background:var(--card2); border:1px solid var(--line); padding:11px 18px; border-radius:10px;
+         font-size:14px; transition:.25s; opacity:0; z-index:99;}
+  .toast.show{transform:translateX(-50%); opacity:1;}
+
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= WELCOME ================= -->
+  <section class="screen active" id="s-welcome">
+    <div class="center">
+      <div class="brand">💬</div>
+      <h1>Chat World</h1>
+      <p class="tag">Welcome to Chat World</p>
+      <p class="made">Made by <b>Saidul Islam</b></p>
+
+      <div class="topnav" style="max-width:320px; margin:0 auto 10px;">
+        <button id="navChat">💬 Chat</button>
+        <button id="navLogin">🔑 Login</button>
+      </div>
+
+      <button class="btn primary" id="navCreate">➕ Create New ID</button>
+    </div>
+  </section>
+
+  <!-- ================= LOGIN ================= -->
+  <section class="screen" id="s-login">
+    <div class="topbar">
+      <button class="icon-btn" data-go="s-welcome">←</button>
+      <h2>Login</h2><span style="width:38px"></span>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="field">
+        <label>Your ID (8 digits)</label>
+        <input id="loginId" inputmode="numeric" maxlength="8" placeholder="e.g. 12345678" />
+      </div>
+      <div class="field">
+        <label>Password (6 digits)</label>
+        <input id="loginPw" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" />
+      </div>
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary" id="btnLogin">Login</button>
+      <button class="btn ghost" data-go="s-signup">Create New ID</button>
+    </div>
+  </section>
+
+  <!-- ================= SIGNUP ================= -->
+  <section class="screen" id="s-signup">
+    <div class="topbar">
+      <button class="icon-btn" data-go="s-welcome">←</button>
+      <h2>Create New ID</h2><span style="width:38px"></span>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="field">
+        <label>New ID (must be 8 digits)</label>
+        <input id="suId" inputmode="numeric" maxlength="8" placeholder="e.g. 87654321" />
+      </div>
+      <div class="field">
+        <label>Password (must be 6 digits)</label>
+        <input id="suPw" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" />
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input id="suPw2" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" />
+      </div>
+      <div class="err" id="suErr"></div>
+      <button class="btn primary" id="btnSignup">Create ID</button>
+    </div>
+  </section>
+
+  <!-- ================= HOME ================= -->
+  <section class="screen" id="s-home">
+    <div class="topbar">
+      <div class="who">Logged in: <b id="meId">—</b></div>
+      <button class="icon-btn" id="btnLogout">Logout</button>
+    </div>
+
+    <div class="banner">Welcome to <b>Chat World</b> — Made by <b>Saidul Islam</b></div>
+
+    <div class="row">
+      <button class="btn primary" id="btnCreate">➕ Create Chat</button>
+      <button class="btn ghost" id="btnAddOpen">🔗 Add / Join</button>
+    </div>
+
+    <h2 style="font-size:16px; color:var(--muted); margin-top:4px;">My Chats</h2>
+    <div class="list" id="roomList"></div>
+  </section>
+
+  <!-- ================= CHAT ================= -->
+  <section class="screen" id="s-chat">
+    <div class="chat-head">
+      <button class="icon-btn" id="btnBack">←</button>
+      <div class="t">
+        <div class="n" id="chatTitle">Chat</div>
+        <div class="s" id="chatSub">This website created by Saidul Islam</div>
+      </div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="chat-foot">
+      <input id="msgInput" placeholder="Type a message..." />
+      <button class="btn primary" id="btnSend">Send</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ MODAL: room created ============ -->
+<div class="modal" id="modal">
+  <div class="card">
+    <h2>🎉 Chat Created</h2>
+    <p style="color:var(--muted); font-size:13px; margin-top:6px;">Share this with your friend</p>
+
+    <p style="margin-top:14px; font-size:12px; color:var(--muted);">Chat Number (4 digits)</p>
+    <div class="code" id="mNum">0000</div>
+
+    <p style="font-size:12px; color:var(--muted);">Chat Password (8 digits)</p>
+    <div class="code" id="mPass">00000000</div>
+
+    <p style="margin:14px 0 4px; color:var(--pri2); font-size:13.5px;">
+      This website created by <b>Saidul Islam</b>
+    </p>
+
+    <button class="btn ghost" id="mCopy">📋 Copy</button>
+    <button class="btn primary" id="mGo">Go to Chat</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: join ============ -->
+<div class="modal" id="modalJoin">
+  <div class="card">
+    <h2>🔗 Add / Join Chat</h2>
+    <div class="field" style="margin-top:12px">
+      <label>Chat Number (4 digits)</label>
+      <input id="joinNum" inputmode="numeric" maxlength="4" placeholder="e.g. 4821" />
+    </div>
+    <div class="field">
+      <label>Chat Password (8 digits)</label>
+      <input id="joinPass" inputmode="numeric" maxlength="8" placeholder="e.g. 12345678" />
+    </div>
+    <div class="err" id="joinErr"></div>
+    <button class="btn primary" id="btnJoin">Add</button>
+    <button class="btn ghost" id="joinClose">Cancel</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: edit message ============ -->
+<div class="modal" id="modalEdit">
+  <div class="card">
+    <h2>✏️ Edit Message</h2>
+    <div class="field" style="margin-top:12px">
+      <label>Your message</label>
+      <input id="editInput" style="letter-spacing:normal;" placeholder="Edit your message..." />
+    </div>
+    <div class="err" id="editErr"></div>
+    <button class="btn primary" id="btnEditSave">Save</button>
+    <button class="btn ghost" id="btnEditCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Chat World — Made by Saidul Islam
+   Data: localStorage   |   Sync: BroadcastChannel
+   ========================================================= */
+const K = { users:'cw_users', rooms:'cw_rooms', msgs:'cw_messages', session:'cw_session' };
+
+const store = {
+  get(k, d=null){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+};
+const getUsers = () => store.get(K.users, {});
+const setUsers = u => store.set(K.users, u);
+const getRooms = () => store.get(K.rooms, {});
+const setRooms = r => store.set(K.rooms, r);
+const getMsgs  = () => store.get(K.msgs , {});
+const setMsgs  = m => store.set(K.msgs , m);
+
+let currentUser = null;
+let currentRoom = null;
+let editingIndex = -1;
+let bc = null;
+
+const $  = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isDigits = (v, n) => new RegExp('^\\d{' + n + '}$').test(v);
+const onlyDigits = el => el.addEventListener('input', () => el.value = el.value.replace(/\D/g,''));
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function timeStr(ts){
+  return new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+document.querySelectorAll('[data-go]').forEach(b => {
+  b.addEventListener('click', () => show(b.dataset.go));
+});
+onlyDigits($('loginId')); onlyDigits($('loginPw'));
+onlyDigits($('suId'));    onlyDigits($('suPw')); onlyDigits($('suPw2'));
+onlyDigits($('joinNum')); onlyDigits($('joinPass'));
+
+/* =========================================================
+   Top nav buttons on welcome
+   ========================================================= */
+$('navLogin').addEventListener('click', () => show('s-login'));
+$('navCreate').addEventListener('click', () => show('s-signup'));
+$('navChat').addEventListener('click', () => {
+  // If already logged in → home, else → login
+  if (currentUser) goHome();
+  else show('s-login');
+});
+
+/* =========================================================
+   SIGN UP
+   ========================================================= */
+$('btnSignup').addEventListener('click', () => {
+  const err = $('suErr'); err.textContent = '';
+  const id = $('suId').value.trim();
+  const pw = $('suPw').value.trim();
+  const pw2 = $('suPw2').value.trim();
+
+  if (!isDigits(id, 8)) return err.textContent = 'ID must be exactly 8 digits.';
+  if (!isDigits(pw, 6)) return err.textContent = 'Password must be exactly 6 digits.';
+  if (pw !== pw2)       return err.textContent = 'Passwords do not match.';
+
+  const users = getUsers();
+  if (users[id]) return err.textContent = 'This ID already exists. Please login.';
+
+  users[id] = { password: pw, chats: [], createdAt: Date.now() };
+  setUsers(users);
+
+  currentUser = id;
+  store.set(K.session, id);
+  toast('ID created ✅');
+  $('suId').value = $('suPw').value = $('suPw2').value = '';
+  goHome();
+});
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+$('btnLogin').addEventListener('click', () => {
+  const err = $('loginErr'); err.textContent = '';
+  const id = $('loginId').value.trim();
+  const pw = $('loginPw').value.trim();
+
+  if (!isDigits(id, 8)) return err.textContent = 'ID must be exactly 8 digits.';
+  if (!isDigits(pw, 6)) return err.textContent = 'Password must be exactly 6 digits.';
+
+  const users = getUsers();
+  if (!users[id])                return err.textContent = 'No account found with this ID.';
+  if (users[id].password !== pw) return err.textContent = 'Wrong password.';
+
+  currentUser = id;
+  store.set(K.session, id);
+  $('loginId').value = $('loginPw').value = '';
+  toast('Logged in ✅');
+  goHome();
+});
+
+$('btnLogout').addEventListener('click', () => {
+  currentUser = null; currentRoom = null;
+  localStorage.removeItem(K.session);
+  show('s-welcome');
+});
+
+/* =========================================================
+   HOME
+   ========================================================= */
+function goHome(){ show('s-home'); renderHome(); }
+
+function renderHome(){
+  $('meId').textContent = currentUser;
+  const users = getUsers();
+  const me = users[currentUser];
+  if (!me){ $('btnLogout').click(); return; }
+
+  const rooms = getRooms();
+  const allMsgs = getMsgs();
+  const list = $('roomList');
+  list.innerHTML = '';
+
+  const mine = (me.chats || []).filter(r => rooms[r]);
+  if (!mine.length){
+    list.innerHTML = '<div class="empty">No chats yet.<br>Tap <b>Create Chat</b> or <b>Add / Join</b>.</div>';
+    return;
+  }
+
+  mine.sort((a,b) => {
+    const la = (allMsgs[a]?.at(-1)?.ts) || rooms[a].createdAt;
+    const lb = (allMsgs[b]?.at(-1)?.ts) || rooms[b].createdAt;
+    return lb - la;
+  });
+
+  mine.forEach(rid => {
+    const last = allMsgs[rid]?.at(-1);
+    const div = document.createElement('div');
+    div.className = 'room';
+    div.innerHTML = `
+      <div class="avatar">${esc(rid.slice(0,2))}</div>
+      <div class="info">
+        <div class="n">Chat #${esc(rid)}</div>
+        <div class="p">${last ? esc(last.text) : 'No messages yet'}</div>
+      </div>`;
+    div.addEventListener('click', () => openRoom(rid));
+    list.appendChild(div);
+  });
+}
+
+/* =========================================================
+   CREATE CHAT
+   ========================================================= */
+$('btnCreate').addEventListener('click', () => {
+  const rooms = getRooms();
+  let num;
+  do { num = String(Math.floor(1000 + Math.random() * 9000)); } while (rooms[num]);
+  const pass = String(Math.floor(10000000 + Math.random() * 90000000));
+
+  rooms[num] = { password: pass, owner: currentUser, createdAt: Date.now() };
+  setRooms(rooms);
+
+  const users = getUsers();
+  users[currentUser].chats = users[currentUser].chats || [];
+  if (!users[currentUser].chats.includes(num)) users[currentUser].chats.push(num);
+  setUsers(users);
+
+  $('mNum').textContent  = num;
+  $('mPass').textContent = pass;
+  $('modal').classList.add('show');
+
+  $('mCopy').onclick = () => {
+    const text = `Chat World\nChat Number: ${num}\nPassword: ${pass}\nThis website created by Saidul Islam`;
+    navigator.clipboard?.writeText(text).then(
+      () => toast('Copied ✅'),
+      () => toast('Copy failed')
+    );
+  };
+  $('mGo').onclick = () => {
+    $('modal').classList.remove('show');
+    openRoom(num);
+  };
+
+  bc?.postMessage({ type:'update' });
+});
+
+/* =========================================================
+   ADD / JOIN
+   ========================================================= */
+$('btnAddOpen').addEventListener('click', () => {
+  $('joinErr').textContent = '';
+  $('joinNum').value = $('joinPass').value = '';
+  $('modalJoin').classList.add('show');
+});
+$('joinClose').addEventListener('click', () => $('modalJoin').classList.remove('show'));
+
+$('btnJoin').addEventListener('click', () => {
+  const err = $('joinErr'); err.textContent = '';
+  const num  = $('joinNum').value.trim();
+  const pass = $('joinPass').value.trim();
+
+  if (!isDigits(num, 4))  return err.textContent = 'Chat number must be 4 digits.';
+  if (!isDigits(pass, 8)) return err.textContent = 'Chat password must be 8 digits.';
+
+  const rooms = getRooms();
+  const room = rooms[num];
+  if (!room)                  return err.textContent = 'No chat found with this number.';
+  if (room.password !== pass) return err.textContent = 'Wrong chat password.';
+
+  const users = getUsers();
+  users[currentUser].chats = users[currentUser].chats || [];
+  if (!users[c
